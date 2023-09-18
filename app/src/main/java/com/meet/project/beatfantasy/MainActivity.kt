@@ -2,6 +2,7 @@ package com.meet.project.beatfantasy
 
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
@@ -43,16 +44,31 @@ class MainActivity : AppCompatActivity() {
 
         binding.webView.webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
-                if (url != null && url.contains("dream11.com")) {
-                    val dream11Intent = packageManager.getLaunchIntentForPackage("com.dream11.android")
-                    if (dream11Intent != null) {
-                        startActivity(dream11Intent)
-                    } else {
-                        val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-                        startActivity(browserIntent)
+                if (url != null)
+                    if (url.contains("dream11.com")) {
+                        val intent = packageManager.getLaunchIntentForPackage("com.dream11.android")
+                        if (intent != null) {
+                            startActivity(intent)
+                        } else {
+                            openInBrowser(url)
+                        }
+                        return true
+                    } else if (url.contains("t.me")) {
+                        val isAppInstalled: Boolean = try {
+                            packageManager.getPackageInfo("org.telegram.messenger", PackageManager.GET_ACTIVITIES)
+                            true
+                        } catch (e: PackageManager.NameNotFoundException) {
+                            openInBrowser(url)
+                            return false
+                        }
+                        if (isAppInstalled) {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                            intent.setPackage("org.telegram.messenger")
+                            startActivity(intent)
+                        }
+                    } else if (url.contains("phonepe.com")) {
+                        openInBrowser(url)
                     }
-                    return true
-                }
                 return super.shouldOverrideUrlLoading(view, url)
             }
 
@@ -65,5 +81,10 @@ class MainActivity : AppCompatActivity() {
                 super.onPageFinished(view, url)
             }
         }
+    }
+
+    fun openInBrowser(url: String) {
+        val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+        startActivity(browserIntent)
     }
 }
