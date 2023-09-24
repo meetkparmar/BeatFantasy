@@ -24,23 +24,7 @@ class MainActivity : AppCompatActivity() {
         val view: View = binding.root
         setContentView(view)
 
-        binding.webView.settings.javaScriptEnabled = true
-        binding.webView.webViewClient = WebViewClient()
-        binding.webView.webChromeClient = WebChromeClient()
-
-        binding.webView.loadUrl("https://www.beatfantasy.com")
-
-        binding.backButton.setOnClickListener {
-            if (binding.webView.canGoBack()) {
-                binding.webView.goBack()
-            }
-        }
-
-        binding.forwardButton.setOnClickListener {
-            if (binding.webView.canGoForward()) {
-                binding.webView.goForward()
-            }
-        }
+        initData()
 
         binding.webView.webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
@@ -54,37 +38,50 @@ class MainActivity : AppCompatActivity() {
                         }
                         return true
                     } else if (url.contains("t.me")) {
-                        val isAppInstalled: Boolean = try {
-                            packageManager.getPackageInfo("org.telegram.messenger", PackageManager.GET_ACTIVITIES)
-                            true
-                        } catch (e: PackageManager.NameNotFoundException) {
-                            openInBrowser(url)
-                            return false
-                        }
-                        if (isAppInstalled) {
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-                            intent.setPackage("org.telegram.messenger")
+                        if (appInstalledOrNot("org.telegram.messenger")) {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url));
                             startActivity(intent)
+                        } else {
+                            openInBrowser(url)
                         }
+                        return true
                     } else if (url.contains("phonepe.com")) {
                         openInBrowser(url)
+                        return true
                     }
                 return super.shouldOverrideUrlLoading(view, url)
             }
 
             override fun onPageFinished(view: WebView?, url: String?) {
-                if (view?.canGoBack() == true) {
-                    binding.topBar.visibility = View.VISIBLE
-                } else {
-                    binding.topBar.visibility = View.GONE
-                }
                 super.onPageFinished(view, url)
+                binding.webView.visibility = View.VISIBLE
+                binding.progressIndicator.visibility = View.GONE
             }
         }
     }
 
-    fun openInBrowser(url: String) {
+    private fun initData() {
+        binding.webView.visibility = View.GONE
+        binding.progressIndicator.visibility = View.VISIBLE
+
+        binding.webView.settings.javaScriptEnabled = true
+        binding.webView.webViewClient = WebViewClient()
+        binding.webView.webChromeClient = WebChromeClient()
+
+        binding.webView.loadUrl("https://www.beatfantasy.com")
+    }
+
+    private fun openInBrowser(url: String) {
         val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
         startActivity(browserIntent)
+    }
+
+    private fun appInstalledOrNot(uri: String): Boolean {
+        try {
+            packageManager.getPackageInfo(uri, PackageManager.GET_ACTIVITIES)
+            return true
+        } catch (e: PackageManager.NameNotFoundException) {
+        }
+        return false
     }
 }
