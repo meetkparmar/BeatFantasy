@@ -5,8 +5,11 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.webkit.WebChromeClient
+import android.webkit.WebResourceError
+import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.appcompat.app.AppCompatActivity
@@ -30,7 +33,7 @@ class MainActivity : AppCompatActivity() {
             override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
                 if (url != null)
                     if (url.contains("dream11.com")) {
-                        val intent = packageManager.getLaunchIntentForPackage("com.dream11.android")
+                        val intent = packageManager.getLaunchIntentForPackage("com.dream11.fantasy.cricket.football.kabaddi")
                         if (intent != null) {
                             startActivity(intent)
                         } else {
@@ -56,10 +59,21 @@ class MainActivity : AppCompatActivity() {
                 super.onPageFinished(view, url)
                 binding.webView.visibility = View.VISIBLE
                 binding.progressIndicator.visibility = View.GONE
+                binding.swipeRefreshLayout.isRefreshing = false
             }
+
+            override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
+                Log.e("WebView Error", error?.description.toString())
+            }
+        }
+
+        binding.swipeRefreshLayout.setOnRefreshListener {
+            // Refresh the WebView content
+            binding.webView.reload()
         }
     }
 
+    @SuppressLint("SetJavaScriptEnabled")
     private fun initData() {
         binding.webView.visibility = View.GONE
         binding.progressIndicator.visibility = View.VISIBLE
@@ -73,6 +87,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun openInBrowser(url: String) {
         val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+        browserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        browserIntent.setPackage("com.android.chrome")
         startActivity(browserIntent)
     }
 
